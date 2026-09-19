@@ -3,12 +3,13 @@
 import { Suspense, useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { ChevronDown, Heart, Menu, Search, ShoppingBag, SlidersHorizontal, Star, X, Loader2, BookX } from 'lucide-react'
+import { Heart, Menu, Minus, Plus, Search, ShoppingBag, SlidersHorizontal, X, Loader2, BookX } from 'lucide-react'
 import { supabase, getBookImageUrl } from '@/lib/supabase/client'
 import { BOOK_CATEGORIES, getCategoryLabel, parseCategories } from '@/lib/categories'
 import type { Book } from '@/lib/types'
 
 import { formatPrice } from '@/lib/utils'
+import { useCart } from '@/components/CartProvider'
 
 const sections = [
   {
@@ -30,16 +31,15 @@ const sections = [
 function BookCard({
   book,
   liked,
-  bag,
   onLike,
-  onBag,
 }: {
   book: Book
   liked: string[]
-  bag: string[]
   onLike: (id: string) => void
-  onBag: (id: string) => void
 }) {
+  const { addItem, decreaseItem, getQuantity } = useCart()
+  const quantity = getQuantity(book.id)
+
   return (
     <article className="group w-[180px] shrink-0 sm:w-[210px]">
       <div className={`relative mb-3 aspect-[.84] overflow-hidden rounded-xl bg-[#f3f2f4]`}>
@@ -73,12 +73,21 @@ function BookCard({
         >
           <Heart size={13} fill={liked.includes(book.id) ? '#e34773' : 'none'} className={liked.includes(book.id) ? 'text-[#e34773]' : ''} />
         </button>
-        <button
-          onClick={(e) => { e.preventDefault(); onBag(book.id) }}
-          className="absolute bottom-2.5 left-2.5 right-2.5 rounded-full bg-[#e34773] py-2 text-[11px] font-bold text-white opacity-0 transition group-hover:opacity-100 focus:opacity-100 shadow-md z-10"
-        >
-          {bag.includes(book.id) ? 'Added to bag' : 'Add to bag'}
-        </button>
+        {quantity > 0 ? (
+          <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10 flex items-center justify-between rounded-full bg-[#e34773] p-1 text-white opacity-100 shadow-md transition sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100">
+            <button onClick={(e) => { e.preventDefault(); decreaseItem(book.id) }} className="grid size-7 place-items-center rounded-full hover:bg-white/20" aria-label={`Decrease ${book.title} quantity`}><Minus size={14} /></button>
+            <span className="text-xs font-bold">{quantity} in bag</span>
+            <button onClick={(e) => { e.preventDefault(); addItem(book) }} disabled={quantity >= book.stock} className="grid size-7 place-items-center rounded-full hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-35" aria-label={`Increase ${book.title} quantity`}><Plus size={14} /></button>
+          </div>
+        ) : (
+          <button
+            onClick={(e) => { e.preventDefault(); addItem(book) }}
+            disabled={book.stock <= 0}
+            className="absolute bottom-2.5 left-2.5 right-2.5 z-10 rounded-full bg-[#e34773] py-2 text-[11px] font-bold text-white opacity-100 shadow-md transition sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 disabled:cursor-not-allowed disabled:bg-[#171528]/50"
+          >
+            {book.stock > 0 ? 'Add to bag' : 'Out of stock'}
+          </button>
+        )}
       </div>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -97,17 +106,13 @@ function BookSection({
   section,
   books: sectionBooks,
   liked,
-  bag,
   onLike,
-  onBag,
   emptyMessage
 }: {
   section: { id: string; label: string; eyebrow: string; accent: string; badge: string }
   books: Book[]
   liked: string[]
-  bag: string[]
   onLike: (id: string) => void
-  onBag: (id: string) => void
   emptyMessage?: string
 }) {
   return (
@@ -124,7 +129,7 @@ function BookSection({
       {sectionBooks.length > 0 ? (
         <div className="flex gap-5 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {sectionBooks.map((book) => (
-            <BookCard key={book.id} book={book} liked={liked} bag={bag} onLike={onLike} onBag={onBag} />
+            <BookCard key={book.id} book={book} liked={liked} onLike={onLike} />
           ))}
         </div>
       ) : (
@@ -141,6 +146,7 @@ function StorefrontContent() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const activeCategorySlug = searchParams.get('category') || 'all'
+  const { totalQuantity, openCart } = useCart()
 
   // Separate states for Sections vs Browse Grid
   const [newArrivals, setNewArrivals] = useState<Book[]>([])
@@ -152,7 +158,6 @@ function StorefrontContent() {
 
   const [query, setQuery] = useState('')
   const [liked, setLiked] = useState<string[]>([])
-  const [bag, setBag] = useState<string[]>([])
   const [menuOpen, setMenuOpen] = useState(false)
 
   // 1. Fetch New Arrivals once
@@ -206,8 +211,6 @@ function StorefrontContent() {
 
   const handleLike = (id: string) =>
     setLiked((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]))
-  const handleBag = (id: string) =>
-    setBag((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]))
 
   // Local text search over the already fetched Browse Books
   const filteredBrowseBooks = useMemo(
@@ -254,10 +257,10 @@ function StorefrontContent() {
             <button className="hidden size-10 place-items-center rounded-full border border-[#171528]/10 sm:grid" aria-label="Search">
               <Search size={18} />
             </button>
-            <button className="relative grid size-10 place-items-center rounded-full border border-[#171528]/10" aria-label="Shopping bag">
+            <button onClick={openCart} className="relative grid size-10 place-items-center rounded-full border border-[#171528]/10" aria-label="Shopping bag">
               <ShoppingBag size={18} />
               <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-[#e34773] text-[10px] font-bold text-white">
-                {bag.length}
+                {totalQuantity}
               </span>
             </button>
           </div>
@@ -304,12 +307,12 @@ function StorefrontContent() {
                 <BookSection 
                   section={sections[1]} 
                   books={newArrivals} 
-                  liked={liked} bag={bag} onLike={handleLike} onBag={handleBag} 
+                  liked={liked} onLike={handleLike}
                 />
                 <BookSection 
                   section={sections[0]} 
                   books={bestsellers} 
-                  liked={liked} bag={bag} onLike={handleLike} onBag={handleBag} 
+                  liked={liked} onLike={handleLike}
                   emptyMessage="Sales data pending. Check back later for our bestsellers!"
                 />
               </div>
@@ -389,7 +392,7 @@ function StorefrontContent() {
                   ) : (
                     <div className="grid gap-x-5 gap-y-10 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                       {filteredBrowseBooks.map((book) => (
-                        <BookCard key={book.id} book={book} liked={liked} bag={bag} onLike={handleLike} onBag={handleBag} />
+                        <BookCard key={book.id} book={book} liked={liked} onLike={handleLike} />
                       ))}
                     </div>
                   )}

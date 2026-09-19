@@ -1,19 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Heart, Menu, Search, ShoppingBag, X } from 'lucide-react'
+import { Heart, Menu, Minus, Plus, ShoppingBag, X } from 'lucide-react'
 import type { Book } from '@/lib/types'
 import { formatPrice } from '@/lib/utils'
 import { getBookImageUrl } from '@/lib/supabase/client'
 import { getCategoryLabel, parseCategories } from '@/lib/categories'
+import { useCart } from '@/components/CartProvider'
 
 export default function BookDetailClient({ book }: { book: Book }) {
-  const router = useRouter()
   const [liked, setLiked] = useState(false)
-  const [inBag, setInBag] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const { addItem, decreaseItem, getQuantity, openCart, totalQuantity } = useCart()
+  const quantity = getQuantity(book.id)
   
   const categories = parseCategories(book.category)
   
@@ -35,11 +35,11 @@ export default function BookDetailClient({ book }: { book: Book }) {
             <button onClick={() => setMenuOpen(true)} className="grid size-10 place-items-center rounded-full border border-[#171528]/10 lg:hidden" aria-label="Open menu">
               <Menu />
             </button>
-            <button className="relative grid size-10 place-items-center rounded-full border border-[#171528]/10" aria-label="Shopping bag">
+            <button onClick={openCart} className="relative grid size-10 place-items-center rounded-full border border-[#171528]/10" aria-label="Shopping bag">
               <ShoppingBag size={18} />
-              {inBag && (
+              {totalQuantity > 0 && (
                 <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-[#e34773] text-[10px] font-bold text-white">
-                  1
+                  {totalQuantity}
                 </span>
               )}
             </button>
@@ -113,13 +113,26 @@ export default function BookDetailClient({ book }: { book: Book }) {
                 </p>
               </div>
 
-              <button
-                onClick={() => setInBag(!inBag)}
-                disabled={book.stock <= 0}
-                className="w-full sm:w-auto bg-[#171528] text-white font-bold rounded-full px-12 py-5 text-lg hover:bg-[#e34773] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-              >
-                {inBag ? 'Remove from Bag' : book.stock > 0 ? 'Add to Bag' : 'Out of Stock'}
-              </button>
+              {quantity > 0 ? (
+                <div className="flex flex-col items-start gap-2">
+                  <div className="flex items-center rounded-full bg-[#171528] p-1 text-white shadow-lg">
+                    <button onClick={() => decreaseItem(book.id)} className="grid size-12 place-items-center rounded-full hover:bg-white/15" aria-label={`Decrease ${book.title} quantity`}><Minus size={20} /></button>
+                    <span className="min-w-16 text-center text-lg font-bold">{quantity}</span>
+                    <button onClick={() => addItem(book)} disabled={quantity >= book.stock} className="grid size-12 place-items-center rounded-full hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-30" aria-label={`Increase ${book.title} quantity`}><Plus size={20} /></button>
+                  </div>
+                  <p className="pl-4 text-xs font-semibold text-[#171528]/45">
+                    {quantity >= book.stock ? `All ${book.stock} available copies are in your bag` : `${book.stock - quantity} more available`}
+                  </p>
+                </div>
+              ) : (
+                <button
+                  onClick={() => addItem(book)}
+                  disabled={book.stock <= 0}
+                  className="w-full sm:w-auto bg-[#171528] text-white font-bold rounded-full px-12 py-5 text-lg hover:bg-[#e34773] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                >
+                  {book.stock > 0 ? 'Add to Bag' : 'Out of Stock'}
+                </button>
+              )}
             </div>
           </div>
         </section>
@@ -149,4 +162,3 @@ export default function BookDetailClient({ book }: { book: Book }) {
     </main>
   )
 }
-
