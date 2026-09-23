@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
 import { Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react'
 import type { Book } from '@/lib/types'
 import { formatPrice } from '@/lib/utils'
@@ -21,7 +22,8 @@ type CartContextValue = {
   openCart: () => void
 }
 
-const STORAGE_KEY = 'kalampanna-cart'
+const STORAGE_KEY = 'bookmellow-cart'
+const LEGACY_STORAGE_KEY = 'kalampanna-cart'
 const CartContext = createContext<CartContextValue | null>(null)
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
@@ -31,7 +33,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem(STORAGE_KEY)
+      const saved = window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_STORAGE_KEY)
       if (saved) {
         const parsed = JSON.parse(saved) as Partial<CartItem>[]
         if (Array.isArray(parsed)) {
@@ -41,6 +43,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             if (!item.book?.id || !Number.isFinite(stock) || stock <= 0 || !Number.isFinite(quantity) || quantity <= 0) return []
             return [{ book: item.book as Book, quantity: Math.min(Math.floor(quantity), Math.floor(stock)) }]
           }))
+          window.localStorage.removeItem(LEGACY_STORAGE_KEY)
         }
       }
     } catch {
@@ -84,49 +87,50 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       {isOpen && (
         <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Shopping bag">
           <button
-            className="absolute inset-0 bg-[#171528]/35"
+            className="absolute inset-0 bg-[#19251d]/45"
             onClick={() => setIsOpen(false)}
             aria-label="Close shopping bag"
           />
-          <aside className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-[#fffdfb] p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#171528]/10 pb-5">
+          <aside className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-[#f8f5ef] p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#19251d]/10 pb-5">
               <div>
-                <h2 className="text-2xl font-extrabold tracking-[-.04em]">Your Bag</h2>
-                <p className="mt-1 text-sm text-[#171528]/50">{value.totalQuantity} {value.totalQuantity === 1 ? 'item' : 'items'}</p>
+                <p className="editorial-kicker">Your selection</p>
+                <h2 className="mt-1 font-serif text-3xl">Shopping bag</h2>
+                <p className="mt-1 text-sm text-[#273028]/50">{value.totalQuantity} {value.totalQuantity === 1 ? 'item' : 'items'}</p>
               </div>
-              <button onClick={() => setIsOpen(false)} className="grid size-10 place-items-center rounded-full border border-[#171528]/10" aria-label="Close shopping bag">
+              <button onClick={() => setIsOpen(false)} className="grid size-10 place-items-center rounded-full border border-[#19251d]/10" aria-label="Close shopping bag">
                 <X size={18} />
               </button>
             </div>
 
             {items.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center text-center">
-                <ShoppingBag size={44} className="mb-4 text-[#171528]/15" />
-                <p className="font-bold">Your bag is empty</p>
-                <p className="mt-1 text-sm text-[#171528]/45">Add a book to start your order.</p>
+                <ShoppingBag size={44} className="mb-4 text-[#19251d]/15" />
+                <p className="font-serif text-2xl">Your bag is empty</p>
+                <p className="mt-2 text-sm text-[#273028]/45">A good book is a lovely place to start.</p>
               </div>
             ) : (
               <div className="flex-1 space-y-5 overflow-y-auto py-5">
                 {items.map(({ book, quantity }) => (
                   <div key={book.id} className="flex gap-4">
-                    <div className="h-28 w-20 shrink-0 overflow-hidden rounded-lg bg-[#f3f2f4]">
+                    <div className="relative h-28 w-20 shrink-0 overflow-hidden bg-[#e8e1d6]">
                       {book.image_url ? (
-                        <img src={getBookImageUrl(book.image_url)!} alt="" className="size-full object-cover" />
+                        <Image src={getBookImageUrl(book.image_url)!} alt="" fill sizes="80px" className="object-cover" />
                       ) : null}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="truncate font-bold">{book.title}</p>
-                          <p className="truncate text-xs text-[#171528]/50">{book.author}</p>
+                          <p className="truncate text-xs text-[#273028]/50">{book.author}</p>
                         </div>
-                        <button onClick={() => value.removeItem(book.id)} className="text-[#171528]/35 hover:text-[#e34773]" aria-label={`Remove ${book.title}`}>
+                        <button onClick={() => value.removeItem(book.id)} className="text-[#273028]/35 hover:text-[#9c372f]" aria-label={`Remove ${book.title}`}>
                           <Trash2 size={16} />
                         </button>
                       </div>
-                      <p className="mt-2 text-sm font-bold text-[#e34773]">{formatPrice(book.price * quantity)}</p>
+                      <p className="mt-2 text-sm font-bold text-[#2f72ae]">{formatPrice(book.price * quantity)}</p>
                       <div className="mt-3 flex items-center gap-3">
-                        <div className="flex items-center rounded-full bg-[#171528] text-white shadow-sm">
+                        <div className="flex items-center rounded-full bg-[#19251d] text-white">
                           <button onClick={() => value.decreaseItem(book.id)} className="grid size-8 place-items-center rounded-full transition hover:bg-white/15" aria-label={`Decrease ${book.title} quantity`}><Minus size={14} /></button>
                           <span className="w-8 text-center text-sm font-bold text-white" aria-label={`${quantity} in bag`}>{quantity}</span>
                           <button
@@ -136,7 +140,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                             aria-label={`Increase ${book.title} quantity`}
                           ><Plus size={14} /></button>
                         </div>
-                        {quantity >= book.stock && <span className="text-[11px] font-semibold text-[#171528]/40">Max stock</span>}
+                        {quantity >= book.stock && <span className="text-[11px] font-semibold text-[#273028]/40">Max stock</span>}
                       </div>
                     </div>
                   </div>
@@ -145,12 +149,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             )}
 
             {items.length > 0 && (
-              <div className="border-t border-[#171528]/10 pt-5">
-                <div className="flex items-center justify-between text-lg font-extrabold">
+              <div className="border-t border-[#19251d]/10 pt-5">
+                <div className="flex items-center justify-between font-serif text-xl font-bold">
                   <span>Subtotal</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
-                <p className="mt-1 text-xs text-[#171528]/45">Shipping and taxes are calculated at checkout.</p>
+                <p className="mt-1 text-xs text-[#273028]/45">Shipping and taxes are calculated at checkout.</p>
               </div>
             )}
           </aside>

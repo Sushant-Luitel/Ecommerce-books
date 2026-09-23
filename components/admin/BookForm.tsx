@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { supabase, getBookImageUrl } from '@/lib/supabase/client'
 import type { Book } from '@/lib/types'
@@ -135,7 +136,7 @@ export default function BookForm({ initialData }: { initialData?: Book }) {
             <div className="flex items-start gap-6">
               <div className="shrink-0 w-32 h-44 bg-[#f3f2f4] rounded-xl border-2 border-dashed border-[#171528]/20 flex flex-col items-center justify-center overflow-hidden relative group">
                 {previewUrl ? (
-                  <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                  <Image src={previewUrl} alt="Preview" fill sizes="128px" className="object-cover" />
                 ) : (
                   <ImageIcon size={32} className="text-[#171528]/30 mb-2" />
                 )}
@@ -268,4 +269,3 @@ export default function BookForm({ initialData }: { initialData?: Book }) {
     </div>
   )
 }
-

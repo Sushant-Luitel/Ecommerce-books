@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { LayoutDashboard, BookOpen } from 'lucide-react'
 import LogoutButton from '@/components/admin/LogoutButton'
+import BrandLogo from '@/components/BrandLogo'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,8 +9,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar */}
       <aside className="w-full md:w-64 border-r border-[#171528]/10 bg-[#f3f2f4]/50 flex flex-col">
         <div className="p-6 border-b border-[#171528]/10">
-          <Link href="/" className="font-serif text-2xl font-bold tracking-[-.06em] text-[#e34773]">
-            Kalam<span className="text-[#171528]">Admin</span>
+          <Link href="/" className="inline-flex flex-col items-start gap-1" aria-label="BookMellow home">
+            <BrandLogo className="h-9 w-auto" priority />
+            <span className="text-[10px] font-bold uppercase tracking-[.2em] text-[#171528]/45">Admin</span>
           </Link>
         </div>
         <nav className="flex-1 p-4 flex flex-col gap-2">
@@ -42,4 +44,3 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </div>
   )
 }
-

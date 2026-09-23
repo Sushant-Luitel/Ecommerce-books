@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { supabase, getBookImageUrl } from '@/lib/supabase/client'
 import { Book } from '@/lib/types'
 import { formatPrice } from '@/lib/utils'
@@ -104,7 +105,7 @@ export default function AdminDashboard() {
                     <td className="py-4">
                       <div className="flex items-center gap-3">
                         {book.image_url ? (
-                          <img src={getBookImageUrl(book.image_url)!} alt={book.title} className="w-10 h-14 object-cover rounded-md" />
+                          <Image src={getBookImageUrl(book.image_url)!} alt={book.title} width={40} height={56} className="h-14 w-10 rounded-md object-cover" />
                         ) : (
                           <div className="w-10 h-14 bg-[#f3f2f4] rounded-md flex items-center justify-center text-[10px] text-[#171528]/40">No img</div>
                         )}
@@ -133,4 +134,3 @@ export default function AdminDashboard() {
     </div>
   )
 }
-

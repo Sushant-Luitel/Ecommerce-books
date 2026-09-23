@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { supabase, getBookImageUrl } from '@/lib/supabase/client'
 import { Book } from '@/lib/types'
 import { getCategoryLabel, parseCategories } from '@/lib/categories'
@@ -128,7 +129,7 @@ export default function AdminBooks() {
                   <tr key={book.id} className="border-b border-[#171528]/5 last:border-0 group">
                     <td className="py-4">
                       {book.image_url ? (
-                        <img src={getBookImageUrl(book.image_url)!} alt={book.title} className="w-12 h-16 object-cover rounded-lg shadow-sm" />
+                        <Image src={getBookImageUrl(book.image_url)!} alt={book.title} width={48} height={64} className="h-16 w-12 rounded-lg object-cover shadow-sm" />
                       ) : (
                         <div className="w-12 h-16 bg-[#f3f2f4] rounded-lg flex items-center justify-center text-[10px] text-[#171528]/40 border border-[#171528]/10">N/A</div>
                       )}
@@ -189,4 +190,3 @@ export default function AdminBooks() {
     </div>
   )
 }
-

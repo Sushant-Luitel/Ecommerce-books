@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { Loader2 } from 'lucide-react'
+import BrandLogo from '@/components/BrandLogo'
 
 export default function AdminLogin() {
   const router = useRouter()
@@ -45,9 +46,7 @@ export default function AdminLogin() {
     <div className="min-h-screen bg-[#fffdfb] flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <p className="font-serif text-3xl font-bold tracking-[-.06em] text-[#e34773] mb-2">
-            Kalam<span className="text-[#171528]">Panna</span>
-          </p>
+          <BrandLogo className="mx-auto mb-3 h-auto w-56" priority />
           <h1 className="text-2xl font-extrabold text-[#171528]">Admin Login</h1>
         </div>
 
@@ -67,7 +66,7 @@ export default function AdminLogin() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-[#f3f2f4] border border-transparent focus:border-[#e34773] rounded-xl px-4 py-3 text-sm outline-none transition-colors"
-                placeholder="admin@kalampanna.com"
+                placeholder="admin@bookmellow.com"
               />
             </div>
             <div>
@@ -102,4 +101,3 @@ export default function AdminLogin() {
     </div>
   )
 }
-

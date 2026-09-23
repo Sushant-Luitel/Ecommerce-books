@@ -1,164 +1,139 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
-import { Heart, Menu, Minus, Plus, ShoppingBag, X } from 'lucide-react'
+import { ArrowLeft, Heart, Minus, Plus, ShieldCheck, ShoppingBag } from 'lucide-react'
 import type { Book } from '@/lib/types'
 import { formatPrice } from '@/lib/utils'
 import { getBookImageUrl } from '@/lib/supabase/client'
 import { getCategoryLabel, parseCategories } from '@/lib/categories'
 import { useCart } from '@/components/CartProvider'
+import StoreHeader from '@/components/store/StoreHeader'
+import StoreFooter from '@/components/store/StoreFooter'
+import BookCard from '@/components/store/BookCard'
 
-export default function BookDetailClient({ book }: { book: Book }) {
+type BookDetailClientProps = {
+  book: Book
+  relatedBooks?: Book[]
+}
+
+export default function BookDetailClient({ book, relatedBooks = [] }: BookDetailClientProps) {
   const [liked, setLiked] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const { addItem, decreaseItem, getQuantity, openCart, totalQuantity } = useCart()
+  const { addItem, decreaseItem, getQuantity, openCart } = useCart()
   const quantity = getQuantity(book.id)
-  
   const categories = parseCategories(book.category)
-  
-  return (
-    <main className="min-h-screen bg-[#fffdfb] text-[#171528]">
-      <div className="mx-auto max-w-[1320px] px-5 sm:px-8">
-        {/* Header */}
-        <header className="flex items-center gap-6 border-b border-[#171528]/8 py-5">
-          <Link href="/" className="shrink-0 font-serif text-2xl font-bold tracking-[-.06em] text-[#e34773]" aria-label="KalamPanna home">
-            Kalam<span className="text-[#171528]">Panna</span>
-          </Link>
-          <div className="hidden flex-1 items-center justify-center md:flex" />
-          <nav className="hidden items-center gap-7 text-sm font-semibold lg:flex">
-            <Link href="/#bestsellers">Bestsellers</Link>
-            <Link href="/#new-arrivals">New Arrivals</Link>
-            <Link href="/#about">About</Link>
-          </nav>
-          <div className="ml-auto flex items-center gap-2">
-            <button onClick={() => setMenuOpen(true)} className="grid size-10 place-items-center rounded-full border border-[#171528]/10 lg:hidden" aria-label="Open menu">
-              <Menu />
-            </button>
-            <button onClick={openCart} className="relative grid size-10 place-items-center rounded-full border border-[#171528]/10" aria-label="Shopping bag">
-              <ShoppingBag size={18} />
-              {totalQuantity > 0 && (
-                <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-[#e34773] text-[10px] font-bold text-white">
-                  {totalQuantity}
-                </span>
-              )}
-            </button>
-          </div>
-        </header>
+  const description = book.description?.replace(/\*/g, '')
 
-        {/* Product Section */}
-        <section className="py-12 md:py-20">
-          <Link href="/" className="inline-flex items-center text-sm font-bold text-[#171528]/50 hover:text-[#e34773] mb-8 transition-colors">
-            ← Back to Store
-          </Link>
-          
-          <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-start">
-            {/* Left: Image Area */}
-            <div className="relative aspect-[.84] w-full max-w-[280px] mx-auto md:mx-0 md:max-w-[340px] lg:max-w-[380px] rounded-[2rem] bg-[#f3f2f4] overflow-hidden shadow-sm">
+  return (
+    <main className="min-h-screen overflow-x-clip bg-[#f8f5ef] text-[#19251d]">
+      <StoreHeader />
+
+      <div className="store-container">
+        <div className="flex items-center gap-2 py-6 text-xs text-[#273028]/48 sm:py-8">
+          <Link href="/" className="inline-flex items-center gap-1.5 transition hover:text-[#2f72ae]"><ArrowLeft size={14} /> Shop</Link>
+          <span>/</span>
+          <span className="max-w-[180px] truncate text-[#273028]/70 sm:max-w-none">{book.title}</span>
+        </div>
+
+        <section className="grid gap-10 pb-16 md:grid-cols-[minmax(0,.88fr)_minmax(0,1.12fr)] md:gap-14 lg:gap-24 lg:pb-24">
+          <div>
+            <div className="relative mx-auto aspect-[3/4] w-full max-w-[520px] bg-[#e8e1d6] md:sticky md:top-28">
               {book.image_url ? (
-                <img
+                <Image
                   src={getBookImageUrl(book.image_url)!}
                   alt={`${book.title} cover`}
-                  className="size-full object-cover mix-blend-multiply opacity-90"
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 500px, (min-width: 768px) 42vw, 92vw"
+                  className="object-contain p-9 drop-shadow-[0_24px_25px_rgba(20,32,23,.2)] sm:p-14"
                 />
               ) : (
-                <div className="size-full flex items-center justify-center text-[#171528]/30 text-sm font-semibold">
-                  No cover available
-                </div>
+                <div className="flex size-full items-center justify-center px-12 text-center font-serif text-4xl text-[#273028]/32">{book.title}</div>
               )}
-              
-              <button
-                onClick={() => setLiked(!liked)}
-                className="absolute right-6 top-6 grid size-12 place-items-center rounded-full bg-white/95 shadow-sm transition hover:scale-105"
-                aria-label={`Add ${book.title} to wishlist`}
-              >
-                <Heart size={20} fill={liked ? '#e34773' : 'none'} className={liked ? 'text-[#e34773]' : ''} />
-              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-col justify-center md:py-8 lg:py-14">
+            {categories.length > 0 && (
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                {categories.map((category) => (
+                  <Link key={category} href={`/?category=${category}#catalog`} className="text-[10px] font-bold uppercase tracking-[.18em] text-[#2f72ae] hover:underline">
+                    {getCategoryLabel(category)}
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            <h1 className="mt-4 max-w-3xl font-serif text-[42px] leading-[1.02] tracking-[-.025em] sm:text-5xl lg:text-[64px]">{book.title}</h1>
+            <p className="mt-4 text-base text-[#273028]/58">by <span className="font-semibold text-[#273028]/75">{book.author}</span></p>
+
+            <div className="mt-8 flex items-center gap-4 border-y border-[#1e2a20]/10 py-6">
+              <span className="text-2xl font-bold">{formatPrice(book.price)}</span>
+              <span className={`text-[10px] font-bold uppercase tracking-[.14em] ${book.stock > 0 ? 'text-[#477047]' : 'text-[#9c372f]'}`}>
+                {book.stock > 0 ? `${book.stock} in stock` : 'Out of stock'}
+              </span>
             </div>
 
-            {/* Right: Details Area */}
-            <div className="flex flex-col">
-              {categories.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {categories.map((c) => (
-                    <Link 
-                      key={c}
-                      href={`/?category=${c}`}
-                      className="rounded-full bg-[#f3f2f4] px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#171528] hover:bg-[#e34773] hover:text-white transition-colors"
-                    >
-                      {getCategoryLabel(c)}
-                    </Link>
-                  ))}
-                </div>
-              )}
-
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-[-.05em] mb-2 leading-tight">
-                {book.title}
-              </h1>
-              <p className="text-lg md:text-xl text-[#171528]/60 font-semibold mb-8">
-                by {book.author}
+            <div className="mt-8">
+              <p className="editorial-kicker">About this book</p>
+              <p className="mt-4 max-w-2xl whitespace-pre-line text-[15px] leading-7 text-[#273028]/68">
+                {description || 'A description has not been added for this title yet.'}
               </p>
+            </div>
 
-              <div className="flex items-end gap-4 mb-8 pb-8 border-b border-[#171528]/10">
-                <span className="text-4xl font-bold text-[#e34773]">{formatPrice(book.price)}</span>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-1 ${book.stock > 0 ? 'bg-[#a7f3d0] text-[#15803d]' : 'bg-[#fecdd3] text-[#e34773]'}`}>
-                  {book.stock > 0 ? 'In Stock' : 'Out of Stock'}
-                </span>
-              </div>
-
-              <div className="mb-10">
-                <h3 className="text-sm font-bold uppercase tracking-[.2em] mb-4 text-[#171528]/40">Description</h3>
-                <p className="text-[#171528]/80 leading-relaxed text-lg">
-                  {book.description || "No description available for this book."}
-                </p>
-              </div>
-
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               {quantity > 0 ? (
-                <div className="flex flex-col items-start gap-2">
-                  <div className="flex items-center rounded-full bg-[#171528] p-1 text-white shadow-lg">
-                    <button onClick={() => decreaseItem(book.id)} className="grid size-12 place-items-center rounded-full hover:bg-white/15" aria-label={`Decrease ${book.title} quantity`}><Minus size={20} /></button>
-                    <span className="min-w-16 text-center text-lg font-bold">{quantity}</span>
-                    <button onClick={() => addItem(book)} disabled={quantity >= book.stock} className="grid size-12 place-items-center rounded-full hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-30" aria-label={`Increase ${book.title} quantity`}><Plus size={20} /></button>
-                  </div>
-                  <p className="pl-4 text-xs font-semibold text-[#171528]/45">
-                    {quantity >= book.stock ? `All ${book.stock} available copies are in your bag` : `${book.stock - quantity} more available`}
-                  </p>
+                <div className="flex min-h-14 items-center justify-between rounded-full bg-[#19251d] px-1 text-white sm:min-w-48">
+                  <button type="button" onClick={() => decreaseItem(book.id)} className="grid size-12 place-items-center rounded-full hover:bg-white/10" aria-label={`Decrease ${book.title} quantity`}><Minus size={18} /></button>
+                  <span className="text-sm font-bold">{quantity} in bag</span>
+                  <button type="button" onClick={() => addItem(book)} disabled={quantity >= book.stock} className="grid size-12 place-items-center rounded-full hover:bg-white/10 disabled:opacity-35" aria-label={`Increase ${book.title} quantity`}><Plus size={18} /></button>
                 </div>
               ) : (
                 <button
+                  type="button"
                   onClick={() => addItem(book)}
                   disabled={book.stock <= 0}
-                  className="w-full sm:w-auto bg-[#171528] text-white font-bold rounded-full px-12 py-5 text-lg hover:bg-[#e34773] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                  className="inline-flex min-h-14 flex-1 items-center justify-center gap-3 rounded-full bg-[#19251d] px-8 text-sm font-bold text-white transition hover:bg-[#2f72ae] disabled:cursor-not-allowed disabled:opacity-50 sm:max-w-xs"
                 >
-                  {book.stock > 0 ? 'Add to Bag' : 'Out of Stock'}
+                  <ShoppingBag size={18} /> {book.stock > 0 ? 'Add to bag' : 'Out of stock'}
                 </button>
               )}
+              <button type="button" onClick={() => setLiked(!liked)} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full border border-[#1e2a20]/15 px-6 text-sm font-bold transition hover:border-[#2f72ae] hover:text-[#2f72ae]">
+                <Heart size={17} fill={liked ? 'currentColor' : 'none'} /> {liked ? 'Saved' : 'Save for later'}
+              </button>
+            </div>
+
+            {quantity > 0 && (
+              <button type="button" onClick={openCart} className="mt-4 w-fit border-b border-[#19251d] pb-1 text-xs font-bold">View shopping bag</button>
+            )}
+
+            <div className="mt-9 flex items-start gap-3 border-t border-[#1e2a20]/10 pt-6 text-xs leading-5 text-[#273028]/52">
+              <ShieldCheck size={18} className="mt-0.5 shrink-0 text-[#477047]" />
+              <p>Availability is updated from our live catalog. Final order details are confirmed during checkout.</p>
             </div>
           </div>
         </section>
 
-        {/* Footer */}
-        <footer id="about" className="flex flex-col gap-4 border-t border-[#171528]/8 py-8 text-sm text-[#171528]/50 sm:flex-row sm:items-center sm:justify-between mt-12">
-          <p className="font-serif text-2xl font-bold text-[#e34773]">Kalam<span className="text-[#171528]">Panna</span></p>
-          <p>For readers, dreamers, and curious minds.</p>
-          <p>© 2026 KalamPanna</p>
-        </footer>
+        {relatedBooks.length > 0 && (
+          <section className="border-t border-[#1e2a20]/10 py-16 sm:py-24">
+            <div className="flex items-end justify-between gap-5">
+              <div>
+                <p className="editorial-kicker">Keep browsing</p>
+                <h2 className="mt-2 font-serif text-3xl sm:text-4xl">More from this shelf</h2>
+              </div>
+              <Link href={categories[0] ? `/?category=${categories[0]}#catalog` : '/#catalog'} className="hidden items-center gap-2 text-sm font-bold hover:text-[#2f72ae] sm:flex">
+                View collection <ArrowLeft size={15} className="rotate-180" />
+              </Link>
+            </div>
+            <div className="mt-9 grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 sm:gap-x-6 lg:grid-cols-4">
+              {relatedBooks.slice(0, 4).map((relatedBook) => <BookCard key={relatedBook.id} book={relatedBook} />)}
+            </div>
+          </section>
+        )}
       </div>
 
-      {/* Mobile menu */}
-      {menuOpen && (
-        <div className="fixed inset-0 z-20 bg-[#fffdfb] p-6">
-          <div className="flex items-center justify-between">
-            <span className="font-serif text-2xl font-bold text-[#e34773]">Kalam<span className="text-[#171528]">Panna</span></span>
-            <button onClick={() => setMenuOpen(false)} aria-label="Close menu"><X /></button>
-          </div>
-          <nav className="mt-16 flex flex-col gap-5 text-3xl font-extrabold">
-            <Link onClick={() => setMenuOpen(false)} href="/#bestsellers">🏆 Bestsellers</Link>
-            <Link onClick={() => setMenuOpen(false)} href="/#new-arrivals">✨ New Arrivals</Link>
-            <Link onClick={() => setMenuOpen(false)} href="/#about" className="text-xl text-[#171528]/50 font-semibold">About</Link>
-          </nav>
-        </div>
-      )}
+      <StoreFooter />
     </main>
   )
 }

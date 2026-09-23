@@ -4,8 +4,8 @@ import './globals.css'
 import { CartProvider } from '@/components/CartProvider'
 
 export const metadata: Metadata = {
-  title: 'KalamPanna — Stories that stay with you',
-  description: 'A thoughtfully curated collection of books for curious minds.',
+  title: 'Book Mellow — Find a book that stays with you',
+  description: 'A thoughtfully curated online bookstore for fiction, ideas, memoirs, and new voices.',
   generator: 'v0.app',
   icons: {
     icon: [
